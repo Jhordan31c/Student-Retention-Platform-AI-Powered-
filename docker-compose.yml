@@ -1,0 +1,142 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: predictor-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-predictor_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - predictor-network
+
+  # Redis Cache
+  redis:
+    image: redis:7.2-alpine
+    container_name: predictor-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - predictor-network
+
+  # Backend API (FastAPI)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../docker/Dockerfile.backend
+    container_name: predictor-backend
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-predictor_db}
+      - REDIS_URL=redis://default:${REDIS_PASSWORD:-redis123}@redis:6379/0
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
+      - ENVIRONMENT=development
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./ml/models:/app/ml_models
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - predictor-network
+
+  # Frontend (Next.js)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../docker/Dockerfile.frontend
+    container_name: predictor-frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NODE_ENV=development
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+    command: npm run dev
+    networks:
+      - predictor-network
+
+  # MLflow Tracking Server
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.17.0
+    container_name: predictor-mlflow
+    environment:
+      - MLFLOW_BACKEND_STORE_URI=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-predictor_db}
+      - MLFLOW_DEFAULT_ARTIFACT_ROOT=/mlflow/artifacts
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow_data:/mlflow
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      mlflow server
+      --backend-store-uri postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-predictor_db}
+      --default-artifact-root /mlflow/artifacts
+      --host 0.0.0.0
+      --port 5000
+    networks:
+      - predictor-network
+
+  # pgAdmin (Optional - for database management)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: predictor-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@predictor.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - predictor-network
+    profiles:
+      - debug
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  mlflow_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  predictor-network:
+    driver: bridge

@@ -1,0 +1,136 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+venv/
+ENV/
+env/
+.venv
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+.idea_modules/
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.npm
+.yarn
+.next/
+out/
+.cache/
+.turbo/
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+coverage/
+.nyc_output/
+
+# ML Models
+*.pkl
+*.joblib
+*.h5
+*.model
+ml/models/*.pkl
+ml/models/*.joblib
+!ml/models/.gitkeep
+
+# Data
+ml/data/raw/*
+ml/data/processed/*
+!ml/data/raw/.gitkeep
+!ml/data/processed/.gitkeep
+*.csv
+*.xlsx
+*.parquet
+*.feather
+
+# MLflow
+mlruns/
+mlartifacts/
+
+# Docker
+*.log
+docker-compose.override.yml
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Build artifacts
+dist/
+build/
+
+# Secrets
+secrets/
+*.key
+*.pem
+*.crt
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# IDEs
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace

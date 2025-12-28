@@ -1,0 +1,49 @@
+# ==========================================
+# MLflow Tracking Server
+# ==========================================
+FROM python:3.12-slim
+
+# Labels para metadata
+LABEL maintainer="tu-email@ejemplo.com" \
+      version="1.0" \
+      description="MLflow Tracking Server"
+
+# Variables de entorno
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# Instalar dependencias del sistema
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libpq-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Instalar MLflow y dependencias (versión actualizada)
+RUN pip install --no-cache-dir \
+    mlflow==3.4.0 \
+    psycopg2-binary \
+    boto3
+
+# Crear usuario y grupo mlflow
+RUN groupadd -r mlflow && \
+    useradd -r -g mlflow mlflow && \
+    mkdir -p /mlflow/artifacts && \
+    chown -R mlflow:mlflow /mlflow
+
+# Cambiar a usuario mlflow
+USER mlflow
+
+WORKDIR /mlflow
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
+    CMD curl -f http://localhost:5000/health || exit 1
+
+# Exponer puerto
+EXPOSE 5000
+
+# Comando por defecto (se puede sobreescribir en docker-compose)
+CMD ["mlflow", "server", \
+     "--host", "0.0.0.0", \
+     "--port", "5000"]

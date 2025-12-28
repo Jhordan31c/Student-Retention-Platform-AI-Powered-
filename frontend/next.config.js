@@ -24,20 +24,17 @@ const nextConfig = {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
   },
   
-  // Turbopack configuration (Next.js 15.5)
-  turbo: {
+  // TypedRoutes (moved out of experimental in Next.js 15.5+)
+  typedRoutes: true,
+  
+  // Turbopack configuration (moved from experimental.turbo)
+  turbopack: {
     rules: {
       '*.svg': {
         loaders: ['@svgr/webpack'],
         as: '*.js',
       },
     },
-  },
-  
-  // Experimental features
-  experimental: {
-    // Enable typed routes (stable in 15.5)
-    typedRoutes: true,
   },
 }
 

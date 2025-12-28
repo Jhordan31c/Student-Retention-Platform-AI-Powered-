@@ -1,0 +1,86 @@
+{
+  "model": "CatBoost",
+  "total_features": 181,
+  "top_20_features": [
+    {
+      "feature": "feature_17",
+      "importance": 23.977726540567364
+    },
+    {
+      "feature": "feature_11",
+      "importance": 6.4409127838330065
+    },
+    {
+      "feature": "feature_22",
+      "importance": 6.413097969703461
+    },
+    {
+      "feature": "feature_18",
+      "importance": 3.8887470560385
+    },
+    {
+      "feature": "feature_177",
+      "importance": 3.7434785431020625
+    },
+    {
+      "feature": "feature_178",
+      "importance": 3.6697533635550017
+    },
+    {
+      "feature": "feature_21",
+      "importance": 3.3267399094582073
+    },
+    {
+      "feature": "feature_16",
+      "importance": 3.155231848101049
+    },
+    {
+      "feature": "feature_0",
+      "importance": 3.082111057746959
+    },
+    {
+      "feature": "feature_23",
+      "importance": 2.930671548355452
+    },
+    {
+      "feature": "feature_12",
+      "importance": 2.8756004489733256
+    },
+    {
+      "feature": "feature_10",
+      "importance": 2.8322779743449376
+    },
+    {
+      "feature": "feature_15",
+      "importance": 2.8107241809013064
+    },
+    {
+      "feature": "feature_9",
+      "importance": 2.4936920505731632
+    },
+    {
+      "feature": "feature_2",
+      "importance": 2.370680979945484
+    },
+    {
+      "feature": "feature_5",
+      "importance": 2.301717668715528
+    },
+    {
+      "feature": "feature_19",
+      "importance": 2.09913892135287
+    },
+    {
+      "feature": "feature_4",
+      "importance": 2.040710352092127
+    },
+    {
+      "feature": "feature_1",
+      "importance": 1.8009698225841473
+    },
+    {
+      "feature": "feature_13",
+      "importance": 1.719056945500997
+    }
+  ]
+}

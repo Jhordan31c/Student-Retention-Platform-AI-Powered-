@@ -1,33 +1,63 @@
 """
-FastAPI application entry point
+🎓 Main Application
+Entry point de la API FastAPI
 """
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.gzip import GZipMiddleware
 from loguru import logger
+import sys
 
 from app.core.config import settings
-from app.api.v1.endpoints import health
+from app.core.lifespan import lifespan
+from app.api.v1.router import api_router
 
-# Configure logger
+# ==========================================
+# CONFIGURAR LOGGING
+# ==========================================
+
+# Configurar loguru
+logger.remove()  # Remover handler por defecto
 logger.add(
-    "logs/app.log",
-    rotation="500 MB",
-    retention="10 days",
-    level="INFO"
+    sys.stdout,
+    colorize=True,
+    format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <level>{message}</level>",
+    level=settings.LOG_LEVEL
 )
 
-# Create FastAPI app
+# Agregar logging a archivo si no es desarrollo
+if settings.ENVIRONMENT != "development":
+    logger.add(
+        "logs/api_{time:YYYY-MM-DD}.log",
+        rotation="00:00",  # Nueva archivo cada día
+        retention="30 days",
+        compression="zip",
+        level=settings.LOG_LEVEL
+    )
+
+# ==========================================
+# CREAR APLICACIÓN FASTAPI
+# ==========================================
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    description="API para predicción de deserción estudiantil con ML/AI",
     version=settings.VERSION,
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json"
+    description=(
+        "API REST para predecir el riesgo de deserción estudiantil utilizando Machine Learning. "
+        "Proporciona endpoints para predicciones individuales y por lotes, "
+        "con análisis de riesgo y recomendaciones personalizadas."
+    ),
+    docs_url=settings.docs_url,
+    redoc_url=settings.redoc_url,
+    openapi_url=f"{settings.API_V1_STR}/openapi.json" if settings.docs_url else None,
+    lifespan=lifespan,  # Lifecycle manager
 )
 
-# CORS Configuration
+# ==========================================
+# MIDDLEWARES
+# ==========================================
+
+# CORS Middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -36,43 +66,68 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# GZip compression
-app.add_middleware(GZipMiddleware, minimum_size=1000)
+# ==========================================
+# ROUTERS
+# ==========================================
 
-# Include routers
+# Incluir router principal de API v1
 app.include_router(
-    health.router,
-    prefix="/api/v1",
-    tags=["health"]
+    api_router,
+    prefix=settings.API_V1_STR
 )
 
-@app.on_event("startup")
-async def startup_event():
-    """Initialize services on startup"""
-    logger.info("🚀 Starting Predictor de Deserción API")
-    logger.info(f"Environment: {settings.ENVIRONMENT}")
-    logger.info(f"API Version: {settings.VERSION}")
-    
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup on shutdown"""
-    logger.info("👋 Shutting down Predictor de Deserción API")
+# ==========================================
+# ROOT ENDPOINT
+# ==========================================
 
-@app.get("/", tags=["root"])
+@app.get(
+    "/",
+    tags=["Root"],
+    summary="API Root",
+    description="Información básica de la API"
+)
 async def root():
-    """Root endpoint"""
+    """
+    Root endpoint - Información de bienvenida
+    """
     return {
-        "message": "Predictor de Deserción Escolar API",
+        "message": f"🎓 {settings.PROJECT_NAME}",
         "version": settings.VERSION,
-        "docs": "/docs",
-        "health": "/api/v1/health"
+        "environment": settings.ENVIRONMENT,
+        "status": "running",
+        "docs": settings.docs_url or "Disabled in production",
+        "api_v1": f"{settings.API_V1_STR}",
+        "endpoints": {
+            "health": f"{settings.API_V1_STR}/health",
+            "metrics": f"{settings.API_V1_STR}/metrics",
+            "predict": f"{settings.API_V1_STR}/predict",
+            "predict_batch": f"{settings.API_V1_STR}/predict/batch",
+            "test": f"{settings.API_V1_STR}/test"
+        }
     }
+
+
+# ==========================================
+# STARTUP EVENT (Opcional - ya está en lifespan)
+# ==========================================
+
+# Si necesitas agregar más lógica de startup, puedes usar:
+# @app.on_event("startup")
+# async def startup_event():
+#     logger.info("Ejecutando tareas adicionales de startup...")
+
+
+# ==========================================
+# RUN APPLICATION
+# ==========================================
 
 if __name__ == "__main__":
     import uvicorn
+    
     uvicorn.run(
         "app.main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True
+        host=settings.HOST,
+        port=settings.PORT,
+        reload=settings.DEBUG,
+        log_level=settings.LOG_LEVEL.lower()
     )

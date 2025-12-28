@@ -1,0 +1,78 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg
+
+# Virtual Environments
+venv/
+env/
+ENV/
+.venv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+docs/
+
+# Tests (no incluir en imagen de producción)
+backend/tests/
+**/test_*.py
+pytest.ini
+
+# Logs
+logs/
+*.log
+
+# Data (no incluir datasets grandes)
+ml/data/raw/*
+ml/data/processed/*
+ml/notebooks/
+ml/notebooks/**/*.ipynb
+reports/figures/
+
+# Keep only models
+!ml/models/*.pkl
+!ml/models/*.json
+
+# Frontend node_modules (se instalan en build)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# Docker
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+
+# Scripts de desarrollo
+setup.sh
+verify.sh
+backend/scripts/

@@ -1,76 +1,78 @@
 """
-Health check endpoints
+💚 Health Check Endpoints
+Endpoints para verificar el estado de la API y obtener métricas del modelo
 """
-from fastapi import APIRouter, status
-from pydantic import BaseModel
-from datetime import datetime
-import sys
 
-from app.core.config import settings
+from fastapi import APIRouter, Depends
+from datetime import datetime
+
+from app.schemas.response import HealthResponse, ModelMetricsResponse
+from app.api.deps import MetadataDep
+from app.core.lifespan import MLModels
 
 router = APIRouter()
-
-
-class HealthResponse(BaseModel):
-    """Health check response model"""
-    status: str
-    timestamp: datetime
-    version: str
-    environment: str
-    python_version: str
-
-
-class StatusResponse(BaseModel):
-    """Detailed status response"""
-    api: str
-    database: str
-    redis: str
-    ml_model: str
-    timestamp: datetime
 
 
 @router.get(
     "/health",
     response_model=HealthResponse,
-    status_code=status.HTTP_200_OK,
     summary="Health Check",
-    description="Check if the API is running"
+    description="Verifica que la API y los modelos ML estén funcionando correctamente"
 )
 async def health_check() -> HealthResponse:
     """
-    Basic health check endpoint
+    Health check endpoint
     
-    Returns:
-        HealthResponse: Current health status
+    Retorna el estado de la API y si los modelos están cargados
     """
     return HealthResponse(
-        status="healthy",
-        timestamp=datetime.now(),
-        version=settings.VERSION,
-        environment=settings.ENVIRONMENT,
-        python_version=f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+        status="healthy" if (MLModels.model and MLModels.pipeline) else "unhealthy",
+        timestamp=datetime.now().isoformat(),
+        model_loaded=MLModels.model is not None,
+        pipeline_loaded=MLModels.pipeline is not None
     )
 
 
 @router.get(
-    "/status",
-    response_model=StatusResponse,
-    status_code=status.HTTP_200_OK,
-    summary="Detailed Status",
-    description="Check status of all services"
+    "/metrics",
+    response_model=ModelMetricsResponse,
+    summary="Model Metrics",
+    description="Obtiene las métricas de performance del modelo ML entrenado"
 )
-async def status_check() -> StatusResponse:
+async def get_model_metrics(
+    metadata: MetadataDep
+) -> ModelMetricsResponse:
     """
-    Detailed status check for all services
+    Obtiene las métricas del modelo entrenado
+    
+    Args:
+        metadata: Metadata del modelo (inyectada por dependency)
     
     Returns:
-        StatusResponse: Status of all services
+        ModelMetricsResponse con información del modelo y métricas
     """
-    # TODO: Implement actual checks for database, redis, and model
-    return StatusResponse(
-        api="operational",
-        database="not_configured",
-        redis="not_configured",
-        ml_model="not_loaded",
-        timestamp=datetime.now()
+    return ModelMetricsResponse(
+        model_name=metadata.get('model_name', 'Unknown'),
+        trained_date=metadata.get('trained_date', 'Unknown'),
+        metrics=metadata.get('metrics', {}),
+        dataset_info=metadata.get('dataset', {})
     )
+
+
+@router.get(
+    "/",
+    summary="API Root",
+    description="Endpoint raíz con información de la API"
+)
+async def root():
+    """
+    Root endpoint - Información básica de la API
+    """
+    return {
+        "message": "🎓 API de Predicción de Deserción Estudiantil",
+        "version": "1.0.0",
+        "status": "running",
+        "docs": "/docs",
+        "health": "/api/v1/health",
+        "metrics": "/api/v1/metrics"
+    }

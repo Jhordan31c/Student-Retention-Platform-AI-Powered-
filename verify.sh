@@ -1,60 +1,83 @@
 #!/bin/bash
 
-# Script de verificación rápida de servicios
-# Usage: ./verify.sh
+echo "============================================"
+echo "🔍 VERIFICACIÓN - Sistema Completo"
+echo "============================================"
 
-set -e
-
+# Colores
 GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
 RED='\033[0;31m'
-BLUE='\033[0;34m'
 NC='\033[0m'
 
-echo -e "${BLUE}🔍 Verificando servicios del Predictor de Deserción...${NC}\n"
+FAILED=0
 
-# Backend
-echo -n "Backend API: "
-if curl -s http://localhost:8000/api/v1/health | grep -q "healthy"; then
-    echo -e "${GREEN}✓ OK${NC}"
+# Función para verificar endpoint
+check_endpoint() {
+    local name=$1
+    local url=$2
+    local expected=$3
+    
+    echo -n "Verificando ${name}... "
+    
+    response=$(curl -s -o /dev/null -w "%{http_code}" "$url" 2>/dev/null)
+    
+    if [ "$response" == "$expected" ]; then
+        echo -e "${GREEN}✅ OK${NC}"
+        return 0
+    else
+        echo -e "${RED}❌ FAILED (HTTP $response)${NC}"
+        FAILED=$((FAILED + 1))
+        return 1
+    fi
+}
+
+echo ""
+echo "${YELLOW}🐳 Verificando servicios Docker...${NC}"
+
+# Verificar que están corriendo
+services=("predictor-backend" "predictor-postgres" "predictor-redis" "predictor-mlflow")
+
+for service in "${services[@]}"; do
+    echo -n "Verificando $service... "
+    if docker ps --format "{{.Names}}" | grep -q "^${service}$"; then
+        echo -e "${GREEN}✅ Running${NC}"
+    else
+        echo -e "${RED}❌ Not running${NC}"
+        FAILED=$((FAILED + 1))
+    fi
+done
+
+echo ""
+echo "${YELLOW}🌐 Verificando endpoints...${NC}"
+
+# Esperar un poco a que los servicios estén listos
+sleep 5
+
+# Verificar endpoints
+check_endpoint "Backend Health" "http://localhost:8000/api/v1/health" "200"
+check_endpoint "Backend Root" "http://localhost:8000/" "200"
+check_endpoint "Backend Docs" "http://localhost:8000/docs" "200"
+check_endpoint "MLflow" "http://localhost:5000/health" "200"
+check_endpoint "Frontend" "http://localhost:3000/" "200"
+
+echo ""
+echo "============================================"
+
+if [ $FAILED -eq 0 ]; then
+    echo -e "${GREEN}✅ TODAS LAS VERIFICACIONES PASARON${NC}"
+    echo ""
+    echo "URLs disponibles:"
+    echo "  - Backend API: http://localhost:8000"
+    echo "  - API Docs: http://localhost:8000/docs"
+    echo "  - MLflow: http://localhost:5000"
+    echo "  - Frontend: http://localhost:3000"
+    echo "  - PgAdmin: http://localhost:5050 (si está habilitado)"
+    exit 0
 else
-    echo -e "${RED}✗ FAIL${NC}"
+    echo -e "${RED}❌ $FAILED VERIFICACIONES FALLARON${NC}"
+    echo ""
+    echo "Para ver logs ejecuta:"
+    echo "  docker-compose logs -f"
+    exit 1
 fi
-
-# Frontend
-echo -n "Frontend: "
-if curl -s http://localhost:3000 > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ OK${NC}"
-else
-    echo -e "${RED}✗ FAIL${NC}"
-fi
-
-# PostgreSQL
-echo -n "PostgreSQL: "
-if docker exec predictor-postgres pg_isready > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ OK${NC}"
-else
-    echo -e "${RED}✗ FAIL${NC}"
-fi
-
-# Redis
-echo -n "Redis: "
-if docker exec predictor-redis redis-cli -a redis123 PING 2>/dev/null | grep -q PONG; then
-    echo -e "${GREEN}✓ OK${NC}"
-else
-    echo -e "${RED}✗ FAIL${NC}"
-fi
-
-# MLflow
-echo -n "MLflow: "
-if curl -s http://localhost:5000 > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ OK${NC}"
-else
-    echo -e "${RED}✗ FAIL${NC}"
-fi
-
-# Docker containers
-echo -n "Containers: "
-RUNNING=$(docker-compose ps | grep -c "Up" || true)
-echo -e "${GREEN}$RUNNING/5 running${NC}"
-
-echo -e "\n${BLUE}Verificación completada${NC}"

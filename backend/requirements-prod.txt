@@ -1,0 +1,44 @@
+# ======================================
+# BACKEND PRODUCTION REQUIREMENTS
+# Optimized for Inference Only
+# ======================================
+
+# Server
+fastapi[all]==0.118.0
+uvicorn[standard]==0.37.0
+python-multipart==0.0.20
+
+# Database
+sqlalchemy==2.0.43
+asyncpg==0.30.0
+psycopg2-binary==2.9.10
+
+# Redis
+redis==6.4.0
+hiredis==3.2.1
+
+# Pydantic
+pydantic==2.11.9
+pydantic-settings==2.11.0
+
+# Security
+python-jose[cryptography]==3.5.0
+passlib[bcrypt]==1.7.4
+python-dotenv==1.1.1
+
+# ML Runtime
+scikit-learn==1.7.2
+pandas==2.1.4
+numpy==1.26.4
+scipy==1.16.2
+catboost==1.2.8
+xgboost==3.0.5
+feature-engine==1.6.2
+
+# Logging & Utils
+loguru==0.7.3
+slowapi==0.1.9
+orjson==3.11.3
+python-dateutil==2.9.0.post0
+pytz==2025.2
+google-generativeai==0.8.3

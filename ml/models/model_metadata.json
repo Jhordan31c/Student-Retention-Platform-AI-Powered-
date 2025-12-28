@@ -1,0 +1,39 @@
+{
+  "model_name": "CatBoost",
+  "trained_date": "2025-10-08T22:59:12.116606",
+  "hyperparameters": {
+    "iterations": 375,
+    "learning_rate": 0.016733961543765403,
+    "depth": 7,
+    "l2_leaf_reg": 5.377094909162027,
+    "border_count": 155,
+    "class_weights": {
+      "0": 2.5,
+      "1": 2.0,
+      "2": 0.7
+    },
+    "random_seed": 42,
+    "verbose": 100
+  },
+  "metrics": {
+    "accuracy": 0.7446327683615819,
+    "f1_macro": 0.691707128604175,
+    "dropout_recall": 0.8450704225352113,
+    "dropout_precision": 0.7384615384615385,
+    "dropout_f1": 0.7881773399014779
+  },
+  "optimization": {
+    "optuna_trials": 150,
+    "optuna_best_value": 0.8450704225352113
+  },
+  "dataset": {
+    "training_samples": 3539,
+    "test_samples": 885,
+    "n_features": 181
+  },
+  "class_weights": {
+    "0": 2.5,
+    "1": 2.0,
+    "2": 0.7
+  }
+}

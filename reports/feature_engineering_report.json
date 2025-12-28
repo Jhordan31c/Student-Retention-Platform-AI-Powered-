@@ -1,0 +1,25 @@
+{
+  "original_features": 37,
+  "engineered_features": 24,
+  "total_features_after_pipeline": 181,
+  "train_samples": 3539,
+  "test_samples": 885,
+  "target_encoding": {
+    "Dropout": 0,
+    "Enrolled": 1,
+    "Graduate": 2
+  },
+  "top_engineered_features": [
+    "approval_rate_2nd_sem",
+    "approval_rate_overall",
+    "approval_rate_1st_sem",
+    "risk_score",
+    "critical_approval"
+  ],
+  "preprocessing_steps": [
+    "1. Feature Engineering (custom transformer)",
+    "2. StandardScaler for numeric features",
+    "3. OneHotEncoder for categorical features"
+  ],
+  "next_step": "Model Training with CatBoost/LightGBM"
+}

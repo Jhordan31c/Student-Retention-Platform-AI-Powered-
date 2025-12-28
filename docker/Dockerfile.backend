@@ -1,51 +1,75 @@
-# Multi-stage build for production optimization
-FROM python:3.12-slim as builder
+# ==========================================
+# MULTI-STAGE BUILD - Backend API
+# Optimizado para producción con soporte para desarrollo
+# ==========================================
 
-# Set working directory
-WORKDIR /app
+# ==========================================
+# Stage 1: Builder - Compilar dependencias
+# ==========================================
+FROM python:3.12-slim AS builder
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Instalar dependencias de compilación
+RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
-    postgresql-client \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
+WORKDIR /build
 
-# Production stage
+# Copiar requirements de producción para optimizar imagen
+COPY backend/requirements-prod.txt ./requirements.txt
+
+# Instalar dependencias en directorio local del usuario
+RUN pip install --user --no-warn-script-location -r requirements.txt
+
+# ==========================================
+# Stage 2: Runtime - Imagen final ligera
+# ==========================================
 FROM python:3.12-slim
 
-# Set working directory
-WORKDIR /app
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PATH=/home/appuser/.local/bin:$PATH
 
-# Install runtime dependencies only
-RUN apt-get update && apt-get install -y \
+# Instalar solo dependencias runtime necesarias + curl para healthcheck
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
+    postgresql-client \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Python dependencies from builder
-COPY --from=builder /root/.local /root/.local
+# Crear usuario no-root
+RUN useradd -m -u 1000 appuser
 
-# Copy application code
-COPY . .
-
-# Create non-root user
-RUN useradd -m -u 1000 appuser && \
+# Crear directorios necesarios
+WORKDIR /app
+RUN mkdir -p /app/logs /app/ml_models && \
     chown -R appuser:appuser /app
+
+# Copiar dependencias Python desde builder
+COPY --from=builder --chown=appuser:appuser /root/.local /home/appuser/.local
+
+# Copiar código de aplicación (SELECTIVO - no todo)
+# IMPORTANTE: Ajusta estas rutas según tu estructura
+COPY --chown=appuser:appuser backend/app /app/app
+COPY --chown=appuser:appuser ml/models /app/ml_models
+
+# Cambiar a usuario no-root
 USER appuser
 
-# Make sure scripts in .local are usable
-ENV PATH=/root/.local/bin:$PATH
+# Healthcheck usando curl (más ligero que requests)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8000/api/v1/health || exit 1
 
-# Expose port
+# Exponer puerto
 EXPOSE 8000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8000/api/v1/health')"
-
-# Run the application
+# Comando por defecto (PRODUCCIÓN - sin --reload)
+# Para desarrollo, sobreescribe con docker-compose
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

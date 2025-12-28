@@ -2,6 +2,7 @@
 Application configuration using Pydantic Settings
 """
 from typing import List
+from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -9,9 +10,10 @@ class Settings(BaseSettings):
     """Application settings"""
     
     # Project Info
-    PROJECT_NAME: str = "Predictor de Deserción Escolar"
+    PROJECT_NAME: str = "🎓 Predictor de Deserción Escolar"
     VERSION: str = "1.0.0"
     ENVIRONMENT: str = "development"
+    DEBUG: bool = True
     
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/predictor_db"
@@ -27,7 +29,7 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: List[str] = [
         "http://localhost:3000",
-        "http://localhost:8000"
+        "http://localhost:8000",
     ]
     
     # MLflow
@@ -39,17 +41,52 @@ class Settings(BaseSettings):
     RATE_LIMIT_PER_MINUTE: int = 60
     
     # Model Configuration
-    MODEL_PATH: str = "ml_models"
+    MODEL_PATH: str = "ml/models"  # Path relativo desde backend/
     MODEL_VERSION: str = "latest"
     
     # Logging
     LOG_LEVEL: str = "INFO"
+    
+    # Server
+    HOST: str = "0.0.0.0"
+    PORT: int = 8000
+    
+    # Docs (agregado)
+    SHOW_DOCS: bool = True
     
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=True,
         extra="allow"
     )
+    
+    # ==========================================
+    # COMPUTED PROPERTIES
+    # ==========================================
+    
+    @property
+    def base_dir(self) -> Path:
+        """Directorio base del proyecto"""
+        return Path(__file__).resolve().parent.parent.parent
+    
+    @property
+    def models_dir(self) -> Path:
+        """Directorio de modelos ML"""
+        return self.base_dir / self.MODEL_PATH
+    
+    @property
+    def docs_url(self) -> str | None:
+        """URL de documentación Swagger"""
+        if self.ENVIRONMENT == "production" and not self.SHOW_DOCS:
+            return None
+        return "/docs"
+    
+    @property
+    def redoc_url(self) -> str | None:
+        """URL de documentación ReDoc"""
+        if self.ENVIRONMENT == "production" and not self.SHOW_DOCS:
+            return None
+        return "/redoc"
 
 
 # Create global settings instance

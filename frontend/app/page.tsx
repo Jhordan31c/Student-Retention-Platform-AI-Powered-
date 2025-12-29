@@ -15,6 +15,7 @@ import { ScenarioSimulator } from '@/components/ScenarioSimulator';
 import { RiskStatusCard } from '@/components/RiskStatusCard';
 import { InterventionBoard, InterventionCase } from '@/components/InterventionBoard';
 import { ActionPlan } from '@/components/ActionPlan';
+import { CaseDetailModal } from '@/components/CaseDetailModal';
 import { AnimatePresence, motion } from 'framer-motion';
 import { MagicButton } from '@/components/ui/magic-button';
 
@@ -22,6 +23,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'predictor' | 'board'>('predictor');
   const [cases, setCases] = useState<InterventionCase[]>([]);
   const [showActionPlan, setShowActionPlan] = useState(false);
+  const [selectedCase, setSelectedCase] = useState<InterventionCase | null>(null);
 
   const [predictionResult, setPredictionResult] = useState<PredictionResult | null>(null);
   const [currentFormData, setCurrentFormData] = useState<any>(null);
@@ -96,12 +98,36 @@ export default function Home() {
       riskLevel: predictionResult.risk_level,
       status: 'active', // Pasa directo a activo con Plan IA
       planSummary: `Plan IA: ${predictionResult.insights[0] || "Intervención general"}`,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      notes: []
     };
 
     setCases(prev => [newCase, ...prev]);
     setShowActionPlan(false);
     setActiveTab('board');
+  };
+
+  const handleUpdateCaseStatus = (newStatus: 'pending' | 'active' | 'resolved') => {
+    if (!selectedCase) return;
+    const updatedCase = { ...selectedCase, status: newStatus };
+    
+    setCases(prev => prev.map(c => c.id === selectedCase.id ? updatedCase : c));
+    setSelectedCase(updatedCase); // Actualizar modal también
+  };
+
+  const handleAddCaseNote = (noteContent: string) => {
+    if (!selectedCase) return;
+    const newNote = {
+      date: new Date().toLocaleString(),
+      content: noteContent
+    };
+    const updatedCase = { 
+      ...selectedCase, 
+      notes: [newNote, ...(selectedCase.notes || [])] 
+    };
+
+    setCases(prev => prev.map(c => c.id === selectedCase.id ? updatedCase : c));
+    setSelectedCase(updatedCase);
   };
 
   const copyToClipboard = () => {
@@ -212,6 +238,18 @@ Fecha: ${new Date(predictionResult.timestamp).toLocaleString()}
             />
           </div>
         )}
+
+        {/* Case Detail Modal */}
+        {selectedCase && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <CaseDetailModal 
+              caseData={selectedCase}
+              onClose={() => setSelectedCase(null)}
+              onUpdateStatus={handleUpdateCaseStatus}
+              onAddNote={handleAddCaseNote}
+            />
+          </div>
+        )}
       </AnimatePresence>
 
       <main className="max-w-7xl mx-auto px-6 py-8">
@@ -298,7 +336,7 @@ Fecha: ${new Date(predictionResult.timestamp).toLocaleString()}
                         gradientTo="#3b82f6"   // Blue
                       >
                         <Brain className="w-5 h-5 text-cyan-300" />
-                        ⚡ Generar Plan de Intervención con IA
+                        Generar Plan de Intervención con IA
                       </MagicButton>
                     </motion.div>
                   )}
@@ -357,7 +395,7 @@ Fecha: ${new Date(predictionResult.timestamp).toLocaleString()}
                 <p className="text-gray-400 text-sm">Monitoreo de casos e intervenciones activas</p>
               </div>
             </div>
-            <InterventionBoard cases={cases} />
+            <InterventionBoard cases={cases} onSelectCase={setSelectedCase} />
           </div>
         )}
       </main>

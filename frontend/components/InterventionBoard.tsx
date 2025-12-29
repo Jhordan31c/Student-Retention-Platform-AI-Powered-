@@ -6,18 +6,20 @@ import { CheckCircle, AlertTriangle, Brain } from '@/components/icons';
 
 export interface InterventionCase {
   id: string;
-  studentId: string; // Simulado
+  studentId: string;
   riskLevel: string;
   status: 'pending' | 'active' | 'resolved';
   planSummary: string;
   createdAt: string;
+  notes?: { date: string; content: string }[];
 }
 
 interface InterventionBoardProps {
   cases: InterventionCase[];
+  onSelectCase: (c: InterventionCase) => void;
 }
 
-export function InterventionBoard({ cases }: InterventionBoardProps) {
+export function InterventionBoard({ cases, onSelectCase }: InterventionBoardProps) {
   const columns = [
     { id: 'pending', title: '🔴 Riesgo Detectado', icon: AlertTriangle },
     { id: 'active', title: '🤖 Plan IA Activado', icon: Brain },
@@ -50,6 +52,7 @@ export function InterventionBoard({ cases }: InterventionBoardProps) {
                   <motion.div
                     key={c.id}
                     layoutId={c.id}
+                    onClick={() => onSelectCase(c)}
                     className="bg-zinc-800 border border-white/5 p-4 rounded-xl shadow-lg hover:border-white/20 cursor-pointer transition-colors group"
                   >
                     <div className="flex justify-between items-start mb-2">

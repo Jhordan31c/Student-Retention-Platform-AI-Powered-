@@ -38,38 +38,60 @@ export function ActionPlan({ riskFactors, onClose, onApprove }: ActionPlanProps)
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
-      className="bg-white text-zinc-900 rounded-xl p-8 max-w-2xl mx-auto shadow-2xl relative"
+      className="bg-gradient-to-b from-[#fafaf9] to-[#fff1f2] text-slate-800 rounded-2xl p-8 max-w-2xl mx-auto shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white/50 relative overflow-hidden"
     >
+      {/* Decoración de fondo sutil */}
+      <div className="absolute top-0 right-0 w-64 h-64 bg-rose-100/30 rounded-full blur-3xl -z-10 transform translate-x-1/2 -translate-y-1/2" />
+
       {/* Header Documento */}
-      <div className="border-b border-zinc-200 pb-4 mb-6 flex justify-between items-center">
+      <div className="border-b border-stone-200/60 pb-6 mb-8 flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold font-serif text-zinc-800">Plan de Éxito Estudiantil</h2>
-          <p className="text-sm text-zinc-500 uppercase tracking-widest mt-1">Generado por AI Assistant • Confidencial</p>
+          <h2 className="text-3xl font-bold font-serif text-slate-900 tracking-tight">Plan de Éxito</h2>
+          <p className="text-xs text-stone-500 font-medium uppercase tracking-widest mt-2 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-rose-400"></span>
+            Generado por AI Assistant
+          </p>
         </div>
-        <Brain className="w-10 h-10 text-blue-600 opacity-20" />
+        <div className="p-3 bg-white rounded-2xl shadow-sm border border-stone-100">
+          <Brain className="w-8 h-8 text-rose-400/80" />
+        </div>
       </div>
 
       {/* Cuerpo */}
-      <div className="space-y-6 font-serif">
-        <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-          <h3 className="font-bold text-blue-800 text-sm uppercase mb-2">Diagnóstico Automático</h3>
-          <p className="text-zinc-700 text-sm leading-relaxed">
-            Se ha detectado un perfil de riesgo basado en {riskFactors.length} factores críticos. 
+      <div className="space-y-8 font-sans">
+        {/* Sección Diagnóstico - Estilo "ATS Score" de la referencia */}
+        <div className="bg-rose-500/5 p-6 rounded-2xl border border-rose-100/50">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center">
+              <span className="text-rose-600 text-lg">!</span>
+            </div>
+            <h3 className="font-bold text-slate-800 text-base">Diagnóstico de Riesgo</h3>
+          </div>
+          <p className="text-slate-600 text-sm leading-relaxed pl-11">
+            Se ha detectado un perfil de riesgo basado en <span className="font-semibold text-slate-800">{riskFactors.length} factores críticos</span>. 
             El sistema recomienda una intervención inmediata enfocada en la estabilidad 
             {riskFactors.some(r => r.includes('Financiero')) ? ' financiera y académica' : ' académica'}.
           </p>
         </div>
 
+        {/* Sección Hoja de Ruta - Estilo Lista Limpia */}
         <div>
-          <h3 className="font-bold text-zinc-900 text-sm uppercase border-b border-zinc-200 pb-2 mb-4">Hoja de Ruta Sugerida</h3>
-          <div className="space-y-4">
+          <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wider mb-5 flex items-center gap-2">
+            <span className="text-stone-300">///</span> Hoja de Ruta Sugerida
+          </h3>
+          <div className="space-y-3">
             {strategies.map((item, i) => (
-              <div key={i} className="flex gap-4 items-start">
-                <div className="flex-none w-16 pt-1">
-                  <span className="bg-zinc-900 text-white text-xs font-bold px-2 py-1 rounded">SEM {item.week}</span>
+              <div key={i} className="group flex gap-4 items-center bg-white/60 hover:bg-white p-4 rounded-xl border border-stone-100 transition-all shadow-sm hover:shadow-md">
+                <div className="flex-none">
+                  <span className="bg-stone-100 text-stone-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider group-hover:bg-slate-800 group-hover:text-white transition-colors">
+                    SEM {item.week}
+                  </span>
                 </div>
-                <div className="border-l-2 border-zinc-200 pl-4 py-1">
-                  <p className="text-zinc-800">{item.action}</p>
+                <div className="flex-1">
+                  <p className="text-slate-700 text-sm font-medium">{item.action}</p>
+                </div>
+                <div className="opacity-0 group-hover:opacity-100 text-stone-300 transition-opacity">
+                  <CheckCircle className="w-4 h-4" />
                 </div>
               </div>
             ))}
@@ -78,19 +100,19 @@ export function ActionPlan({ riskFactors, onClose, onApprove }: ActionPlanProps)
       </div>
 
       {/* Footer / Acciones */}
-      <div className="mt-8 pt-6 border-t border-zinc-200 flex justify-end gap-3 font-sans">
+      <div className="mt-10 pt-6 border-t border-stone-200/60 flex justify-end gap-4 font-sans">
         <button 
           onClick={onClose}
-          className="px-4 py-2 text-zinc-500 hover:bg-zinc-100 rounded-lg text-sm font-medium transition-colors"
+          className="px-6 py-2.5 text-stone-500 hover:text-stone-800 hover:bg-stone-100 rounded-xl text-sm font-medium transition-colors"
         >
           Cancelar
         </button>
         <button 
           onClick={onApprove}
-          className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow-lg hover:shadow-blue-500/30 transition-all flex items-center gap-2"
+          className="px-8 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center gap-2"
         >
-          <CheckCircle className="w-4 h-4" />
-          Aprobar e Iniciar Seguimiento
+          <CheckCircle className="w-4 h-4 text-emerald-400" />
+          Aprobar Plan
         </button>
       </div>
     </motion.div>
